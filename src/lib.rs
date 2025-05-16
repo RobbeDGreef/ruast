@@ -181,6 +181,9 @@ impl_hasitem_methods!(Crate);
 
 impl fmt::Display for Crate {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(shebang) = &self.shebang {
+            writeln!(f, "#!{shebang}")?;
+        }
         for attr in self.attrs.iter() {
             writeln!(f, "{attr}")?;
         }
@@ -195,6 +198,11 @@ impl fmt::Display for Crate {
 impl From<Crate> for TokenStream {
     fn from(value: Crate) -> Self {
         let mut ts = TokenStream::new();
+        if let Some(shebang) = value.shebang {
+            ts.push(Token::Pound);
+            ts.push(Token::Not);
+            ts.push(Token::Shebang(shebang));
+        }
         for attr in value.attrs {
             ts.extend(TokenStream::from(attr));
         }
