@@ -207,6 +207,7 @@ pub enum Token {
     Lifetime(String),
     Keyword(KeywordToken),
     DocComment(String),
+    Shebang(String),
     Eof,
 }
 
@@ -249,6 +250,7 @@ impl fmt::Display for Token {
             Self::Lifetime(lifetime) => write!(f, "'{lifetime}"),
             Self::Keyword(keyword) => write!(f, "{keyword}"),
             Self::DocComment(comment) => write!(f, "{comment}"),
+            Self::Shebang(shebang) => write!(f, "{shebang}"),
             Self::Eof => write!(f, ""),
         }
     }
