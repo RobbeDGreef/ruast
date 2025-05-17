@@ -2534,6 +2534,9 @@ impl<K> AddVisibility<K> for Item<K> {
 
 impl<K: fmt::Display> fmt::Display for Item<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for attr in &self.attrs {
+            writeln!(f, "{attr}")?;
+        }
         write!(f, "{}{}", self.vis, self.kind)
     }
 }
@@ -2541,6 +2544,9 @@ impl<K: fmt::Display> fmt::Display for Item<K> {
 impl<K: Into<TokenStream>> From<Item<K>> for TokenStream {
     fn from(value: Item<K>) -> Self {
         let mut ts = TokenStream::new();
+        for attr in value.attrs {
+            ts.extend(TokenStream::from(attr))
+        }
         ts.extend(TokenStream::from(value.vis));
         ts.extend(value.kind.into());
         ts
