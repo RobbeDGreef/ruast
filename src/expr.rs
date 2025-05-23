@@ -2164,7 +2164,7 @@ pub struct AddrOf {
 
 impl fmt::Display for AddrOf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "&")?;
+        write!(f, "(&")?;
         match (self.kind, self.mutability) {
             (BorrowKind::Ref, Mutability::Not) => {}
             (BorrowKind::Ref, Mutability::Mut) => {
@@ -2177,7 +2177,7 @@ impl fmt::Display for AddrOf {
                 write!(f, "raw mut ")?;
             }
         }
-        write!(f, "{expr}", expr = self.expr)
+        write!(f, "{expr})", expr = self.expr)
     }
 }
 
