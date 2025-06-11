@@ -2415,6 +2415,7 @@ impl From<WherePredicate> for TokenStream {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Impl {
     pub generics: Vec<GenericParam>,
+    pub is_const: bool,
     pub of_trait: Option<Type>,
     pub self_ty: Type,
     pub where_clauses: Option<Vec<WherePredicate>>,
@@ -2424,6 +2425,7 @@ pub struct Impl {
 impl fmt::Display for Impl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "impl")?;
+
         if !self.generics.is_empty() {
             write!(f, "<")?;
             for (i, generic) in self.generics.iter().enumerate() {
@@ -2435,6 +2437,11 @@ impl fmt::Display for Impl {
             write!(f, ">")?;
         }
         write!(f, " ")?;
+
+        if self.is_const {
+            write!(f, "const ")?;
+        }
+
         if let Some(of_trait) = &self.of_trait {
             write!(f, "{of_trait} for ")?;
         }
@@ -2471,6 +2478,11 @@ impl From<Impl> for TokenStream {
             }
             ts.push(Token::Gt);
         }
+
+        if value.is_const {
+            ts.push(Token::Keyword(KeywordToken::Const));
+        }
+
         if let Some(of_trait) = value.of_trait {
             ts.extend(TokenStream::from(of_trait));
             ts.push(Token::Keyword(KeywordToken::For));
@@ -2499,7 +2511,7 @@ impl EmptyItem for Impl {
     type Input = Type;
 
     fn empty(self_ty: impl Into<Self::Input>) -> Self {
-        Self::new(vec![], None, self_ty.into(), None, vec![])
+        Self::new(vec![], false, None, self_ty.into(), None, vec![])
     }
 }
 
@@ -2517,6 +2529,7 @@ impl_hasitem_methods!(Impl, AssocItem);
 impl Impl {
     pub fn new(
         generics: Vec<GenericParam>,
+        is_const: bool,
         of_trait: Option<Type>,
         self_ty: Type,
         where_clauses: Option<Vec<WherePredicate>>,
@@ -2524,6 +2537,24 @@ impl Impl {
     ) -> Self {
         Self {
             generics,
+            is_const,
+            of_trait,
+            self_ty,
+            where_clauses,
+            items,
+        }
+    }
+
+    pub fn const_(
+        generics: Vec<GenericParam>,
+        of_trait: Option<Type>,
+        self_ty: Type,
+        where_clauses: Option<Vec<WherePredicate>>,
+        items: Vec<AssocItem>,
+    ) -> Self {
+        Self {
+            generics,
+            is_const: true,
             of_trait,
             self_ty,
             where_clauses,
@@ -2533,6 +2564,7 @@ impl Impl {
 
     pub fn trait_impl(
         generics: Vec<GenericParam>,
+        is_const: bool,
         self_ty: Type,
         of_trait: Type,
         where_clauses: Option<Vec<WherePredicate>>,
@@ -2540,6 +2572,7 @@ impl Impl {
     ) -> Self {
         Self {
             generics,
+            is_const,
             of_trait: Some(of_trait),
             self_ty,
             where_clauses,
@@ -2550,6 +2583,7 @@ impl Impl {
     pub fn simple(self_ty: Type, items: Vec<AssocItem>) -> Self {
         Self {
             generics: vec![],
+            is_const: false,
             of_trait: None,
             self_ty,
             where_clauses: None,
