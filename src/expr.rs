@@ -1330,16 +1330,18 @@ pub struct Field {
 
 impl fmt::Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{expr}.{ident}", expr = self.expr, ident = self.ident)
+        write!(f, "({expr}.{ident})", expr = self.expr, ident = self.ident)
     }
 }
 
 impl From<Field> for TokenStream {
     fn from(value: Field) -> Self {
         let mut ts = TokenStream::new();
+        ts.push(Token::OpenDelim(Delimiter::Parenthesis));
         ts.extend(TokenStream::from(*value.expr));
         ts.push(Token::Dot);
         ts.push(Token::ident(value.ident));
+        ts.push(Token::CloseDelim(Delimiter::Parenthesis));
         ts
     }
 }
