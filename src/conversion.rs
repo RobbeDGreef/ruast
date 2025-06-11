@@ -127,6 +127,7 @@ impl ToTokens for Token {
                 &keyword.to_string(),
                 Span::call_site(),
             ))]),
+            Self::Shebang(_) => {}
             Self::DocComment(_) => {}
             Self::Joint(token) => token.to_tokens(tokens),
             Self::Eof => {}

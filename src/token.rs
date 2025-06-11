@@ -359,6 +359,7 @@ pub enum Token {
     DocComment(String),
     /// When print this variant as an element of a `TokenStream`, it is displayed combined with the following tokens (no spacing).
     Joint(Box<Token>),
+    Shebang(String),
     Eof,
 }
 
@@ -402,6 +403,7 @@ impl fmt::Display for Token {
             Self::Keyword(keyword) => write!(f, "{keyword}"),
             Self::DocComment(comment) => write!(f, "{comment}"),
             Self::Joint(token) => write!(f, "{token}"),
+            Self::Shebang(shebang) => write!(f, "{shebang}"),
             Self::Eof => write!(f, ""),
         }
     }
