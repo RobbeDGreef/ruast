@@ -2698,7 +2698,7 @@ impl HasPrecedence for AddrOf {
 
 impl fmt::Display for AddrOf {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "(&")?;
+        write!(f, "&")?;
         match (self.kind, self.mutability) {
             (BorrowKind::Ref, Mutability::Not) => {}
             (BorrowKind::Ref, Mutability::Mut) => {
