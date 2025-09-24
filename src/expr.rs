@@ -779,13 +779,13 @@ pub struct Binary {
 
 impl fmt::Display for Binary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.precedence() < self.lhs.precedence() || self.op.is_comparison() {
+        if self.precedence() < self.lhs.precedence() || self.op.requires_parenthesis() {
             write!(f, "({})", self.lhs)?;
         } else {
             write!(f, "{}", self.lhs)?;
         }
         write!(f, " {} ", self.op)?;
-        if self.precedence() < self.rhs.precedence() || self.op.is_comparison() {
+        if self.precedence() < self.rhs.precedence() || self.op.requires_parenthesis() {
             write!(f, "({})", self.rhs)?;
         } else {
             write!(f, "{}", self.rhs)?;
@@ -2058,10 +2058,10 @@ impl BinOpKind {
         }
     }
 
-    pub fn is_comparison(&self) -> bool {
+    pub fn requires_parenthesis(&self) -> bool {
         matches!(
             self,
-            Self::Eq | Self::Ne | Self::Lt | Self::Le | Self::Gt | Self::Ge
+            Self::Eq | Self::Ne | Self::Lt | Self::Le | Self::Gt | Self::Ge | Self::Shl | Self::Shr
         )
     }
 }
