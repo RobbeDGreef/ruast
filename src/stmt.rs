@@ -739,8 +739,8 @@ impl fmt::Display for ParamCount {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Fixed => Ok(()),
-            Self::Variadic(Some(pat)) => write!(f, "{pat}: ..."),
-            Self::Variadic(None) => write!(f, "..."),
+            Self::Variadic(Some(pat)) => write!(f, ", {pat}: ..."),
+            Self::Variadic(None) => write!(f, ", ..."),
         }
     }
 }
