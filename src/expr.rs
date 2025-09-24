@@ -571,12 +571,10 @@ impl HasPrecedence for Expr {
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "(")?;
         for attr in self.attrs.iter() {
             writeln!(f, "{attr}")?;
         }
-        self.kind.fmt(f)?;
-        writeln!(f, ")")
+        self.kind.fmt(f)
     }
 }
 
@@ -781,13 +779,13 @@ pub struct Binary {
 
 impl fmt::Display for Binary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.precedence() < self.lhs.precedence() {
+        if self.precedence() < self.lhs.precedence() || self.op.is_comparison() {
             write!(f, "({})", self.lhs)?;
         } else {
             write!(f, "{}", self.lhs)?;
         }
         write!(f, " {} ", self.op)?;
-        if self.precedence() < self.rhs.precedence() {
+        if self.precedence() < self.rhs.precedence() || self.op.is_comparison() {
             write!(f, "({})", self.rhs)?;
         } else {
             write!(f, "{}", self.rhs)?;
@@ -2058,6 +2056,13 @@ impl BinOpKind {
             Self::Shr => ">>=",
             _ => unreachable!(),
         }
+    }
+
+    pub fn is_comparison(&self) -> bool {
+        matches!(
+            self,
+            Self::Eq | Self::Ne | Self::Lt | Self::Le | Self::Gt | Self::Ge
+        )
     }
 }
 
