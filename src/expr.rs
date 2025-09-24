@@ -571,10 +571,12 @@ impl HasPrecedence for Expr {
 
 impl fmt::Display for Expr {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "(")?;
         for attr in self.attrs.iter() {
             writeln!(f, "{attr}")?;
         }
-        self.kind.fmt(f)
+        self.kind.fmt(f)?;
+        writeln!(f, ")")
     }
 }
 
