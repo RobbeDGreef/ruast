@@ -729,12 +729,44 @@ impl Param {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum ParamCount {
+    Fixed,
+    Variadic(Option<Box<Pat>>),
+}
+
+impl fmt::Display for ParamCount {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Fixed => Ok(()),
+            Self::Variadic(Some(pat)) => write!(f, "{pat}: ..."),
+            Self::Variadic(None) => write!(f, "..."),
+        }
+    }
+}
+
+impl From<ParamCount> for TokenStream {
+    fn from(value: ParamCount) -> Self {
+        match value {
+            ParamCount::Fixed => TokenStream::new(),
+            ParamCount::Variadic(Some(pat)) => {
+                let mut ts = TokenStream::new();
+                ts.extend(TokenStream::from(*pat));
+                ts.push(Token::Colon);
+                ts.push(Token::DotDotDot);
+                ts
+            }
+            ParamCount::Variadic(None) => TokenStream::from(vec![Token::DotDotDot]),
+        }
+    }
+}
+
 /// `'(' params (, ...)? ')' ('->' output)?`
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnDecl {
     pub inputs: Vec<Param>,
     pub output: Option<Type>,
-    pub is_variadic: bool,
+    pub param_count: ParamCount,
 }
 
 impl fmt::Display for FnDecl {
@@ -746,9 +778,7 @@ impl fmt::Display for FnDecl {
             }
             write!(f, "{param}")?;
         }
-        if self.is_variadic {
-            write!(f, ", ...")?;
-        }
+        write!(f, "{param_count}", param_count = self.param_count)?;
         write!(f, ")")?;
         if let Some(output) = &self.output {
             write!(f, " -> {output}")?;
@@ -767,10 +797,7 @@ impl From<FnDecl> for TokenStream {
             }
             ts.extend(TokenStream::from(param.clone()).into_joint());
         }
-        if value.is_variadic {
-            ts.push(Token::Comma);
-            ts.push(Token::DotDotDot);
-        }
+        ts.extend(TokenStream::from(value.param_count));
         ts.push(Token::CloseDelim(Delimiter::Parenthesis));
         if let Some(output) = value.output {
             ts.push(Token::RArrow);
@@ -781,21 +808,21 @@ impl From<FnDecl> for TokenStream {
 }
 
 impl FnDecl {
-    pub fn new(inputs: Vec<Param>, output: Option<Type>, is_variadic: bool) -> Self {
+    pub fn new(inputs: Vec<Param>, output: Option<Type>, param_count: ParamCount) -> Self {
         Self {
             inputs,
             output,
-            is_variadic,
+            param_count,
         }
     }
 
     /// non-variadic function declaration
     pub fn regular(inputs: Vec<Param>, output: Option<Type>) -> Self {
-        Self::new(inputs, output, false)
+        Self::new(inputs, output, ParamCount::Fixed)
     }
 
     pub fn variadic(inputs: Vec<Param>, output: Option<Type>) -> Self {
-        Self::new(inputs, output, true)
+        Self::new(inputs, output, ParamCount::Fixed)
     }
 
     pub fn empty() -> Self {
