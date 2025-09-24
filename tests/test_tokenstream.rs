@@ -961,7 +961,7 @@ fn test_fndecl_to_tokenstream() {
     let fn_decl = FnDecl::new(
         vec![Param::new(Pat::ident("x"), Type::i32())],
         Some(Type::unit()),
-        false,
+        ParamCount::Fixed,
     );
     let ts = TokenStream::from(fn_decl);
     assert_snapshot!(ts, @"(x: i32) -> ()");
@@ -971,7 +971,7 @@ fn test_fndecl_to_tokenstream() {
 fn test_fn_to_tokenstream() {
     let fn_item = Fn::simple(
         "test_func",
-        FnDecl::new(vec![], Some(Type::unit()), false),
+        FnDecl::new(vec![], Some(Type::unit()), ParamCount::Fixed),
         Block::new(vec![], None),
     );
     let ts = TokenStream::from(fn_item);
