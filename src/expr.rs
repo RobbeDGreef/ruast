@@ -1603,11 +1603,11 @@ impl HasPrecedence for Field {
 impl fmt::Display for Field {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.precedence() < self.expr.precedence() {
-            write!(f, "({})", self.expr)?;
+            write!(f, "(({})", self.expr)?;
         } else {
-            write!(f, "{}", self.expr)?;
+            write!(f, "({}", self.expr)?;
         }
-        write!(f, ".{}", self.ident)
+        write!(f, ".{})", self.ident)
     }
 }
 
@@ -1615,6 +1615,7 @@ impl From<Field> for TokenStream {
     fn from(value: Field) -> Self {
         let mut ts = TokenStream::new();
         let precedence = value.precedence();
+        ts.push(Token::OpenDelim(Delimiter::Parenthesis).into_joint());
         if precedence < value.expr.precedence() {
             ts.push(Token::OpenDelim(Delimiter::Parenthesis).into_joint());
             ts.extend(TokenStream::from(*value.expr).into_joint());
@@ -1624,6 +1625,8 @@ impl From<Field> for TokenStream {
         }
         ts.push(Token::Dot.into_joint());
         ts.push(Token::ident(value.ident));
+        ts.push(Token::CloseDelim(Delimiter::Parenthesis).into_joint());
+
         ts
     }
 }
