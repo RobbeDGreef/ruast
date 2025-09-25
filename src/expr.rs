@@ -780,15 +780,15 @@ pub struct Binary {
 impl fmt::Display for Binary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.precedence() < self.lhs.precedence() || self.op.requires_parenthesis() {
-            write!(f, "({})", self.lhs)?;
+            write!(f, "(({})", self.lhs)?;
         } else {
-            write!(f, "{}", self.lhs)?;
+            write!(f, "({}", self.lhs)?;
         }
         write!(f, " {} ", self.op)?;
         if self.precedence() < self.rhs.precedence() || self.op.requires_parenthesis() {
-            write!(f, "({})", self.rhs)?;
+            write!(f, "({}))", self.rhs)?;
         } else {
-            write!(f, "{}", self.rhs)?;
+            write!(f, "{})", self.rhs)?;
         }
         Ok(())
     }
@@ -798,6 +798,8 @@ impl From<Binary> for TokenStream {
     fn from(value: Binary) -> Self {
         let mut ts = TokenStream::new();
         let precedence = value.precedence();
+        ts.push(Token::OpenDelim(Delimiter::Parenthesis));
+
         if precedence < value.lhs.precedence() {
             ts.push(Token::OpenDelim(Delimiter::Parenthesis).into_joint());
             ts.extend(TokenStream::from(*value.lhs).into_joint());
@@ -813,6 +815,8 @@ impl From<Binary> for TokenStream {
         } else {
             ts.extend(TokenStream::from(*value.rhs));
         }
+        ts.push(Token::CloseDelim(Delimiter::Parenthesis));
+
         ts
     }
 }
@@ -909,11 +913,11 @@ impl HasPrecedence for Unary {
 
 impl fmt::Display for Unary {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.op)?;
+        write!(f, "({}", self.op)?;
         if self.precedence() < self.expr.precedence() {
-            write!(f, "({})", self.expr)
+            write!(f, "({}))", self.expr)
         } else {
-            write!(f, "{}", self.expr)
+            write!(f, "{})", self.expr)
         }
     }
 }
@@ -922,6 +926,8 @@ impl From<Unary> for TokenStream {
     fn from(value: Unary) -> Self {
         let mut ts = TokenStream::new();
         let precedence = value.precedence();
+        ts.push(Token::OpenDelim(Delimiter::Parenthesis));
+
         ts.push(Token::from(value.op));
         if precedence < value.expr.precedence() {
             ts.push(Token::OpenDelim(Delimiter::Parenthesis).into_joint());
@@ -930,6 +936,8 @@ impl From<Unary> for TokenStream {
         } else {
             ts.extend(TokenStream::from(*value.expr));
         }
+        ts.push(Token::CloseDelim(Delimiter::Parenthesis));
+
         ts
     }
 }
