@@ -1186,6 +1186,7 @@ impl If {
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct While {
+    pub label: Option<String>,
     pub cond: Box<Expr>,
     pub body: Block,
 }
@@ -1198,6 +1199,9 @@ impl HasPrecedence for While {
 
 impl fmt::Display for While {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(label) = &self.label {
+            write!(f, "'{label}: ")?;
+        }
         write!(f, "while ")?;
         if self.cond.should_wrap() {
             write!(f, "({})", self.cond)?;
@@ -1211,6 +1215,10 @@ impl fmt::Display for While {
 impl From<While> for TokenStream {
     fn from(value: While) -> Self {
         let mut ts = TokenStream::new();
+        if let Some(label) = value.label {
+            ts.push(Token::lifetime(&label).into_joint());
+            ts.push(Token::Colon);
+        }
         ts.push(Token::Keyword(KeywordToken::While));
         if value.cond.should_wrap() {
             ts.push(Token::OpenDelim(Delimiter::Parenthesis).into_joint());
@@ -1225,10 +1233,19 @@ impl From<While> for TokenStream {
 }
 
 impl While {
-    pub fn new(cond: impl Into<Expr>, body: Block) -> Self {
+    pub fn new(cond: impl Into<Expr>, body: Block, label: Option<String>) -> Self {
         Self {
             cond: Box::new(cond.into()),
             body,
+            label,
+        }
+    }
+
+    pub fn unlabelled(cond: impl Into<Expr>, body: Block) -> Self {
+        Self {
+            cond: Box::new(cond.into()),
+            body,
+            label: None,
         }
     }
 }
@@ -1239,6 +1256,7 @@ pub struct ForLoop {
     pub pat: Box<Pat>,
     pub expr: Box<Expr>,
     pub body: Block,
+    pub label: Option<String>,
 }
 
 impl HasPrecedence for ForLoop {
@@ -1249,6 +1267,9 @@ impl HasPrecedence for ForLoop {
 
 impl fmt::Display for ForLoop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(label) = &self.label {
+            write!(f, "'{label}: ")?;
+        }
         write!(f, "for {pat} in ", pat = self.pat,)?;
         if self.expr.should_wrap() {
             write!(f, "({})", self.expr)?;
@@ -1262,6 +1283,10 @@ impl fmt::Display for ForLoop {
 impl From<ForLoop> for TokenStream {
     fn from(value: ForLoop) -> Self {
         let mut ts = TokenStream::new();
+        if let Some(label) = value.label {
+            ts.push(Token::lifetime(&label).into_joint());
+            ts.push(Token::Colon);
+        }
         ts.push(Token::Keyword(KeywordToken::For));
         ts.extend(TokenStream::from(*value.pat));
         ts.push(Token::Keyword(KeywordToken::In));
@@ -1278,11 +1303,21 @@ impl From<ForLoop> for TokenStream {
 }
 
 impl ForLoop {
-    pub fn new(pat: impl Into<Pat>, expr: impl Into<Expr>, body: Block) -> Self {
+    pub fn new(pat: impl Into<Pat>, expr: impl Into<Expr>, body: Block, label: Option<String>) -> Self {
         Self {
             pat: Box::new(pat.into()),
             expr: Box::new(expr.into()),
             body,
+            label,
+        }
+    }
+
+    pub fn unlabelled(pat: impl Into<Pat>, expr: impl Into<Expr>, body: Block) -> Self {
+        Self {
+            pat: Box::new(pat.into()),
+            expr: Box::new(expr.into()),
+            body,
+            label: None,
         }
     }
 }
@@ -1290,6 +1325,7 @@ impl ForLoop {
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Loop {
+    pub label: Option<String>,
     pub body: Block,
 }
 
@@ -1301,6 +1337,9 @@ impl HasPrecedence for Loop {
 
 impl fmt::Display for Loop {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(label) = &self.label {
+            write!(f, "'{label}: ")?;
+        }
         write!(f, "loop {body}", body = self.body)
     }
 }
@@ -1308,6 +1347,10 @@ impl fmt::Display for Loop {
 impl From<Loop> for TokenStream {
     fn from(value: Loop) -> Self {
         let mut ts = TokenStream::new();
+        if let Some(label) = &value.label {
+            ts.push(Token::lifetime(label).into_joint());
+            ts.push(Token::Colon);
+        }
         ts.push(Token::Keyword(KeywordToken::Loop));
         ts.extend(TokenStream::from(value.body));
         ts
@@ -1318,13 +1361,17 @@ impl EmptyItem for Loop {
     type Input = ();
 
     fn empty(_ident: impl Into<()>) -> Self {
-        Self::new(Block::empty())
+        Self::unlabelled(Block::empty())
     }
 }
 
 impl Loop {
-    pub fn new(body: Block) -> Self {
-        Self { body }
+    pub fn new(body: Block, label: Option<String>) -> Self {
+        Self { body, label }
+    }
+
+    pub fn unlabelled(body: Block) -> Self {
+        Self { body, label: None }
     }
 }
 

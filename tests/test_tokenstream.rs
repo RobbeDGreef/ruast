@@ -314,7 +314,7 @@ fn test_if_to_tokenstream() {
 
 #[test]
 fn test_while_to_tokenstream() {
-    let while_stmt = While::new(
+    let while_stmt = While::unlabelled(
         Expr::new(Lit::bool("true")),
         Block::from(Stmt::Expr(Expr::new(Lit::int("1")))),
     );
@@ -323,8 +323,19 @@ fn test_while_to_tokenstream() {
 }
 
 #[test]
+fn test_while_to_tokenstream_with_label() {
+    let while_stmt = While::new(
+        Expr::new(Lit::bool("true")),
+        Block::from(Stmt::Expr(Expr::new(Lit::int("1")))),
+        Some("label".into()),
+    );
+    let ts = TokenStream::from(while_stmt);
+    assert_snapshot!(ts, @"'label: while true { 1 }");
+}
+
+#[test]
 fn test_forloop_to_tokenstream() {
-    let for_stmt = ForLoop::new(
+    let for_stmt = ForLoop::unlabelled(
         Pat::Wild,
         Path::single("items"),
         Block::from(Stmt::Expr(Expr::new(Lit::int("1")))),
@@ -334,10 +345,32 @@ fn test_forloop_to_tokenstream() {
 }
 
 #[test]
+fn test_forloop_to_tokenstream_with_label() {
+    let for_stmt = ForLoop::new(
+        Pat::Wild,
+        Path::single("items"),
+        Block::from(Stmt::Expr(Expr::new(Lit::int("1")))),
+        Some("label".into()),
+    );
+    let ts = TokenStream::from(for_stmt);
+    assert_snapshot!(ts, @"'label: for _ in items { 1 }");
+}
+
+#[test]
 fn test_loop_to_tokenstream() {
-    let loop_stmt = Loop::new(Block::from(Stmt::Expr(Expr::new(Lit::int("1")))));
+    let loop_stmt = Loop::unlabelled(Block::from(Stmt::Expr(Expr::new(Lit::int("1")))));
     let ts = TokenStream::from(loop_stmt);
     assert_snapshot!(ts, @"loop { 1 }");
+}
+
+#[test]
+fn test_loop_to_tokenstream_with_label() {
+    let loop_stmt = Loop::new(
+        Block::from(Stmt::Expr(Expr::new(Lit::int("1")))),
+        Some("label".into()),
+    );
+    let ts = TokenStream::from(loop_stmt);
+    assert_snapshot!(ts, @"'label: loop { 1 }");
 }
 
 #[test]
