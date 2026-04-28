@@ -870,7 +870,7 @@ impl From<FnDecl> for TokenStream {
         }
         if value.inputs.len() > 0 && value.is_variadic() {
             ts.push(Token::Comma);
-        } 
+        }
         ts.extend(TokenStream::from(value.param_count));
         ts.push(Token::CloseDelim(Delimiter::Parenthesis));
         if let Some(output) = value.output {
@@ -2409,6 +2409,7 @@ impl UnionDef {
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TraitDef {
+    pub is_const: bool,
     pub ident: String,
     pub generics: Vec<GenericParam>,
     pub supertraits: Vec<Type>,
@@ -2417,6 +2418,9 @@ pub struct TraitDef {
 
 impl fmt::Display for TraitDef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.is_const {
+            write!(f, "const ")?;
+        }
         write!(f, "trait {}", self.ident)?;
         if !self.generics.is_empty() {
             write!(f, "<")?;
@@ -2449,6 +2453,9 @@ impl fmt::Display for TraitDef {
 impl From<TraitDef> for TokenStream {
     fn from(value: TraitDef) -> Self {
         let mut ts = TokenStream::new();
+        if value.is_const {
+            ts.push(Token::Keyword(KeywordToken::Const));
+        }
         ts.push(Token::Keyword(KeywordToken::Trait));
         ts.push(Token::ident(value.ident));
         if !value.generics.is_empty() {
@@ -2508,11 +2515,13 @@ impl_hasitem_methods!(TraitDef, AssocItem);
 impl TraitDef {
     pub fn new(
         ident: impl Into<String>,
+        is_const: bool,
         generics: Vec<GenericParam>,
         supertraits: Vec<Type>,
         items: Vec<AssocItem>,
     ) -> Self {
         Self {
+            is_const,
             ident: ident.into(),
             generics,
             supertraits,
@@ -2521,11 +2530,11 @@ impl TraitDef {
     }
 
     pub fn simple(ident: impl Into<String>, items: Vec<AssocItem>) -> Self {
-        Self::new(ident, Vec::new(), Vec::new(), items)
+        Self::new(ident, false, Vec::new(), Vec::new(), items)
     }
 
     pub fn empty(ident: impl Into<String>) -> Self {
-        Self::new(ident, Vec::new(), Vec::new(), Vec::new())
+        Self::new(ident, false, Vec::new(), Vec::new(), Vec::new())
     }
 
     pub fn add_supertrait(&mut self, ty: impl Into<Type>) {
